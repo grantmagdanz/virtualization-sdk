@@ -50,13 +50,13 @@ def plugin_config_filename():
 @pytest.fixture
 def fake_staged_plugin_config():
     return os.path.join(os.path.dirname(__file__),
-                        'fake_plugin/staged/plugin_config.yml')
+                        'fake_plugin', 'staged', 'plugin_config.yml')
 
 
 @pytest.fixture
 def fake_direct_plugin_config():
     return os.path.join(os.path.dirname(__file__),
-                        'fake_plugin/direct/plugin_config.yml')
+                        'fake_plugin', 'direct', 'plugin_config.yml')
 
 
 @pytest.fixture

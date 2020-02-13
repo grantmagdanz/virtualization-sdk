@@ -3,8 +3,10 @@
 #
 import exceptions
 from collections import defaultdict
+from Queue import Queue
 
-from dlpx.virtualization._internal.plugin_importer import PluginImporter
+from dlpx.virtualization._internal import plugin_importer
+from plugin_importer import PluginImporter
 
 import mock
 import pytest
@@ -17,9 +19,10 @@ class TestPluginImporter:
                                  plugin_name, plugin_entry_point_name,
                                  plugin_module_content, plugin_manifest):
         mock_import.return_value = plugin_module_content
-        importer = PluginImporter(src_dir, plugin_name,
-                                  plugin_entry_point_name, plugin_type, False)
-        manifest, warnings = importer.import_plugin()
+
+        queue = Queue()
+        plugin_importer._get_manifest(queue, src_dir, plugin_name, plugin_entry_point_name, plugin_type, False)
+        manifest, warnings = plugin_importer._parse_queue(queue)
 
         assert not warnings
         assert manifest == plugin_manifest
@@ -32,15 +35,14 @@ class TestPluginImporter:
         manifest = {}
         warnings = defaultdict(list)
 
-        with pytest.raises(exceptions.UserError) as err_info:
-            importer = PluginImporter(src_dir, plugin_name,
-                                      plugin_entry_point_name, plugin_type,
-                                      False)
-            manifest, warnings = importer.import_plugin()
+        queue = Queue()
+        plugin_importer._get_manifest(queue, src_dir, plugin_name, plugin_entry_point_name, plugin_type, False)
+        manifest, warnings = plugin_importer._parse_queue(queue)
 
-        message = str(err_info)
-        assert warnings.items() > 0
         assert manifest == {}
+        assert len(warnings) == 1
+        assert len(warnings['exception']) == 1
+        message = str(warnings['exception'])
         assert 'Plugin module content is None.' in message
 
     @staticmethod
@@ -48,17 +50,15 @@ class TestPluginImporter:
     def test_plugin_entry_object_none(mock_import, src_dir, plugin_type,
                                       plugin_name, plugin_module_content):
         mock_import.return_value = plugin_module_content
-        manifest = {}
-        warnings = defaultdict(list)
 
-        with pytest.raises(exceptions.UserError) as err_info:
-            importer = PluginImporter(src_dir, plugin_name, None, plugin_type,
-                                      False)
-            manifest, warnings = importer.import_plugin()
+        queue = Queue()
+        plugin_importer._get_manifest(queue, src_dir, plugin_name, None, plugin_type, False)
+        manifest, warnings = plugin_importer._parse_queue(queue)
 
-        message = str(err_info)
-        assert warnings.items() > 0
         assert manifest == {}
+        assert len(warnings) == 1
+        assert len(warnings['exception']) == 1
+        message = str(warnings['exception'][0])
         assert 'Plugin entry point object is None.' in message
 
     @staticmethod
@@ -68,17 +68,15 @@ class TestPluginImporter:
                                             plugin_module_content):
         entry_point_name = "nonexistent entry point"
         mock_import.return_value = plugin_module_content
-        manifest = {}
-        warnings = defaultdict(list)
 
-        with pytest.raises(exceptions.UserError) as err_info:
-            importer = PluginImporter(src_dir, plugin_name, entry_point_name,
-                                      plugin_type, False)
-            manifest, warnings = importer.import_plugin()
+        queue = Queue()
+        plugin_importer._get_manifest(queue, src_dir, plugin_name, entry_point_name, plugin_type, False)
+        manifest, warnings = plugin_importer._parse_queue(queue)
 
-        message = err_info.value.message
-        assert warnings.items() > 0
         assert manifest == {}
+        assert len(warnings) == 1
+        assert len(warnings['exception']) == 1
+        message = str(warnings['exception'][0])
         assert ('\'{}\' is not a symbol in module'.format(entry_point_name) in
                 message)
 
@@ -90,16 +88,14 @@ class TestPluginImporter:
         setattr(plugin_module_content, none_entry_point, None)
 
         mock_import.return_value = plugin_module_content
-        manifest = {}
-        warnings = defaultdict(list)
 
-        with pytest.raises(exceptions.UserError) as err_info:
-            importer = PluginImporter(src_dir, plugin_name, none_entry_point,
-                                      plugin_type, False)
-            manifest, warnings = importer.import_plugin()
+        queue = Queue()
+        plugin_importer._get_manifest(queue, src_dir, plugin_name, none_entry_point, plugin_type, False)
+        manifest, warnings = plugin_importer._parse_queue(queue)
 
-        message = err_info.value.message
-        assert warnings.items() > 0
         assert manifest == {}
+        assert len(warnings) == 1
+        assert len(warnings['exception']) == 1
+        message = str(warnings['exception'][0])
         assert ('Plugin object retrieved from the entry point {} is'
                 ' None'.format(none_entry_point)) in message

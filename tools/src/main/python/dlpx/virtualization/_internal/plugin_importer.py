@@ -160,21 +160,7 @@ class PluginImporter:
                                 plugin_type, validate))
         process.start()
         process.join()
-        manifest, warnings = PluginImporter.__parse_queue(queue)
-        return manifest, warnings
-
-    @staticmethod
-    def __parse_queue(queue):
-        manifest = {}
-        warnings = defaultdict(list)
-        while not queue.empty():
-            q_item = queue.get()
-            if 'manifest' in q_item:
-                manifest = q_item['manifest']
-            else:
-                key = list(q_item.keys())[0]
-                warnings[key].append(q_item[key])
-
+        manifest, warnings = _parse_queue(queue)
         return manifest, warnings
 
     @staticmethod
@@ -222,6 +208,18 @@ class PluginImporter:
                     exception_msg, len(warnings['warning']),
                     len(warnings['exception'])))
 
+def _parse_queue(queue):
+    manifest = {}
+    warnings = defaultdict(list)
+    while not queue.empty():
+        q_item = queue.get()
+        if 'manifest' in q_item:
+            manifest = q_item['manifest']
+        else:
+            key = list(q_item.keys())[0]
+            warnings[key].append(q_item[key])
+
+    return manifest, warnings
 
 def _get_manifest(queue, src_dir, module, entry_point, plugin_type, validate):
     manifest = {}

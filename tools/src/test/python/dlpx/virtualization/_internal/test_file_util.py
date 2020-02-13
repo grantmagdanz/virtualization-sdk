@@ -34,13 +34,12 @@ class TestFileUtil:
 
         cwd = os.getcwd()
         try:
-            os.chdir(tmp_path.as_posix())
-            actual = file_util.get_src_dir_path('plugin/plugin_config.yml',
+            os.chdir(str(tmp_path))
+            actual = file_util.get_src_dir_path(os.path.join('plugin', 'plugin_config.yml'),
                                                 'src')
         finally:
             os.chdir(cwd)
-
-        assert actual == src_dir.as_posix()
+        assert actual == str(src_dir)
 
     @staticmethod
     def test_get_src_dir_path_is_abs_fail():
@@ -166,7 +165,7 @@ class TestFileUtil:
         f.write_text(u'hello')
         tgt = tmp_path / 'tgt'
 
-        file_util.clean_copy(src.as_posix(), tgt.as_posix())
+        file_util.clean_copy(str(src), str(tgt))
 
         expected_file = tgt / 'hello.txt'
         assert expected_file.exists()
@@ -190,7 +189,7 @@ class TestFileUtil:
         tgt_file = tgt / 'remove.txt'
         tgt_file.touch()
 
-        file_util.clean_copy(src.as_posix(), tgt.as_posix())
+        file_util.clean_copy(str(src), str(tgt))
 
         expected_file = tgt / 'hello.txt'
         assert expected_file.exists()
@@ -219,7 +218,7 @@ class TestFileUtil:
         tgt_parent.mkdir()
         tgt = tgt_parent / 'tgt'
 
-        file_util.clean_copy(src.as_posix(), tgt.as_posix())
+        file_util.clean_copy(str(src), str(tgt))
 
         expected_file = tgt / 'child' / 'hello.txt'
         assert expected_file.exists()
@@ -240,5 +239,5 @@ class TestFileUtil:
 
                 raise RuntimeError('test')
         except RuntimeError as e:
-            assert e.message == 'test'
+            assert str(e) == 'test'
             assert not os.path.exists(d)

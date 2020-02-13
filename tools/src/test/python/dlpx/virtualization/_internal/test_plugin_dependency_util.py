@@ -21,14 +21,14 @@ class TestPluginDependencyUtil:
         google = tmp_path / 'google'
         google.mkdir()
 
-        pdu.install_deps(tmp_path.as_posix())
+        pdu.install_deps(str(tmp_path))
 
         expected_dependencies = [
             '{}=={}'.format(p, package_util.get_version())
             for p in ['dvp-common', 'dvp-libs', 'dvp-platform']
         ]
         mock_install_to_dir.assert_called_once_with(expected_dependencies,
-                                                    tmp_path.as_posix())
+                                                    str(tmp_path))
 
     @staticmethod
     @mock.patch.object(pdu, '_pip_install_to_dir')
@@ -51,18 +51,18 @@ class TestPluginDependencyUtil:
             dist_path.touch()
 
             global packages
-            packages.add(dist_path.as_posix())
+            packages.add(str(dist_path))
 
         def clean_up(a, b, c):
-            file_util.delete_paths(wheel_dir.as_posix())
+            file_util.delete_paths(str(wheel_dir))
 
-        mock_tmpdir.return_value.__enter__.return_value = wheel_dir.as_posix()
+        mock_tmpdir.return_value.__enter__.return_value = str(wheel_dir)
         mock_tmpdir.return_value.__exit__.side_effect = clean_up
         mock_build_wheel.side_effect = build_wheel
 
-        pdu.install_deps(build_dir.as_posix(), local_vsdk_root='vsdk')
+        pdu.install_deps(str(build_dir), local_vsdk_root='vsdk')
         mock_install_to_dir.assert_called_once_with(packages,
-                                                    build_dir.as_posix())
+                                                    str(build_dir))
 
     @staticmethod
     @mock.patch.object(subprocess, 'Popen')
@@ -122,22 +122,22 @@ class TestPluginDependencyUtil:
         mock_popen.return_value.communicate.return_value = ('output', '')
         mock_popen.return_value.wait.return_value = 0
 
-        pdu._build_wheel(tmp_path.as_posix())
+        pdu._build_wheel(str(tmp_path))
 
         mock_popen.assert_called_once_with(
             [sys.executable, 'setup.py', 'bdist_wheel'],
-            cwd=tmp_path.as_posix(),
+            cwd=str(tmp_path),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT)
 
     @staticmethod
     def test_build_wheel_fails_with_no_setup_file(tmp_path):
         with pytest.raises(RuntimeError) as excinfo:
-            pdu._build_wheel(tmp_path.as_posix())
+            pdu._build_wheel(str(tmp_path))
 
-        assert excinfo.value.message == (
+        assert str(excinfo.value) == (
             'No setup.py file exists in directory '
-            '{}'.format(tmp_path.as_posix()))
+            '{}'.format(str(tmp_path)))
 
     @staticmethod
     @mock.patch.object(subprocess, 'Popen')
@@ -149,13 +149,13 @@ class TestPluginDependencyUtil:
         mock_popen.return_value.wait.return_value = 1
 
         with pytest.raises(SubprocessFailedError) as excinfo:
-            pdu._build_wheel(tmp_path.as_posix())
+            pdu._build_wheel(str(tmp_path))
 
         e = excinfo.value
 
         expected_args = [sys.executable, 'setup.py', 'bdist_wheel']
         mock_popen.asesrt_called_once_with(expected_args,
-                                           cwd=tmp_path.as_posix(),
+                                           cwd=str(tmp_path),
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.STDOUT)
 
@@ -176,14 +176,14 @@ class TestPluginDependencyUtil:
         mock_popen.return_value.communicate.return_value = ('output', '')
         mock_popen.return_value.wait.return_value = 0
 
-        pdu._build_wheel(package_dir.as_posix(),
-                         target_dir=target_dir.as_posix())
+        pdu._build_wheel(str(package_dir),
+                         target_dir=str(target_dir))
 
         expected_args = [
             sys.executable, 'setup.py', 'bdist_wheel', '-d',
-            target_dir.as_posix()
+            str(target_dir)
         ]
         mock_popen.assert_called_once_with(expected_args,
-                                           cwd=package_dir.as_posix(),
+                                           cwd=str(package_dir),
                                            stdout=subprocess.PIPE,
                                            stderr=subprocess.STDOUT)

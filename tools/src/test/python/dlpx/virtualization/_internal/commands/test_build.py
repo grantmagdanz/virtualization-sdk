@@ -504,7 +504,7 @@ class TestPluginUtil:
         with pytest.raises(exceptions.UserError) as err_info:
             build.build(plugin_config_file, artifact_file, False, False)
 
-        message = err_info.value.message
+        message = str(err_info.value)
         assert (
             'Unable to load schemas from \'{}\'\nError code: 13.'
             ' Error message: Permission denied'.format(schema_file)) in message
